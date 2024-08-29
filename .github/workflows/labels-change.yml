@@ -1,0 +1,50 @@
+name: Label Change Action
+
+on:
+  issues:
+    types: [labeled, unlabeled]
+
+jobs:
+  label_change_job:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check last run timestamp
+      id: check-last-run
+      run: |
+        last_run_file=".github/label_change_last_run"
+        if [ -f "$last_run_file" ]; then
+          last_run=$(cat "$last_run_file")
+        else
+          last_run=0
+        fi
+        current_time=$(date +%s)
+        time_diff=$((current_time - last_run))
+        echo "time_diff=$time_diff" >> $GITHUB_ENV
+
+    - name: Decide to run or schedule later
+      id: schedule-or-run
+      run: |
+        if [ $time_diff -lt 900 ]; then
+          echo "Job triggered too soon. Scheduling a delayed run."
+          echo "::set-output name=should_run::false"
+        else
+          echo "Running the action now."
+          echo "::set-output name=should_run::true"
+        fi
+
+    - name: Update last run timestamp
+      if: steps.schedule-or-run.outputs.should_run == 'true'
+      run: |
+        echo $(date +%s) > .github/label_change_last_run
+
+    - name: Run your actions
+      if: steps.schedule-or-run.outputs.should_run == 'true'
+      run: |
+        echo "Labels have changed! Running the desired action."
+
+    - name: Schedule delayed run
+      if: steps.schedule-or-run.outputs.should_run == 'false'
+      run: |
+        echo "Scheduling a delayed run..."
+        gh workflow run label-change.yml --ref ${{ github.ref }} --wait --timeout 15m
