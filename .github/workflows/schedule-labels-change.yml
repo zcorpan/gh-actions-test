@@ -57,4 +57,6 @@ jobs:
 
     - name: Run "Build and Deploy"
       if: env.should_run == 'true'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: gh workflow run build-and-deploy.yml --ref ${{ github.ref }}
