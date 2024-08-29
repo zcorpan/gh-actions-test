@@ -39,6 +39,7 @@ jobs:
         else
           echo "Running the action now."
           echo "should_run=true" >> $GITHUB_ENV
+        fi
 
     - name: Update last run timestamp
       if: env.should_run == 'true'
