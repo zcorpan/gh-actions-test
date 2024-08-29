@@ -1,0 +1,15 @@
+name: Schedule Label Change Action
+
+on:
+  schedule:
+    - cron: '*/15 * * * *' # Runs every 15 minutes
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  schedule_label_change:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Trigger the main workflow if needed
+      run: |
+        gh workflow run label-change.yml --ref ${{ github.ref }}
