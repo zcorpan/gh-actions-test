@@ -3,27 +3,10 @@ name: Label Change Action
 on:
   issues:
     types: [labeled, unlabeled]
-  workflow_dispatch: # Allows manual or programmatic trigger
 
 jobs:
-  label_change_job:
+  noop:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Set up cache for should_run flag
-      id: cache-should-run
-      uses: actions/cache@v4
-      with:
-        path: .github/should_run_flag
-        key: should_run_flag
-
-    - name: Set should_run to true
-      run: |
-        mkdir -p .github
-        echo "true" > .github/should_run_flag
-
-    - name: Save should_run flag to cache
-      uses: actions/cache@v4
-      with:
-        path: .github/should_run_flag
-        key: should_run_flag
+    - name: No operation
+      run: echo "Label changed. Detected by the scheduler."
