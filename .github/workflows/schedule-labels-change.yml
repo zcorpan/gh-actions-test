@@ -3,13 +3,38 @@ name: Schedule Label Change Action
 on:
   schedule:
     - cron: '*/15 * * * *' # Runs every 15 minutes
-  workflow_dispatch: # Allows manual trigger
 
 jobs:
-  schedule_label_change:
+  check_and_trigger:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Trigger the main workflow if needed
+    - name: Set up cache for last run timestamp
+      id: cache-last-run
+      uses: actions/cache@v4
+      with:
+        path: .github/label_change_last_run
+        key: label-change-last-run
+
+    - name: Check if last run was recent
+      id: check-last-run
       run: |
+        last_run_file=".github/label_change_last_run"
+        if [ -f "$last_run_file" ]; then
+          last_run=$(cat "$last_run_file")
+        else
+          last_run=0
+        fi
+        current_time=$(date +%s)
+        time_diff=$((current_time - last_run))
+        echo "time_diff=$time_diff" >> $GITHUB_ENV
+
+    - name: Trigger main workflow if needed
+      if: env.time_diff -ge 900
+      run: |
+        echo "Triggering the main workflow..."
         gh workflow run label-change.yml --ref ${{ github.ref }}
+
+    - name: Skip triggering
+      if: env.time_diff -lt 900
+      run: echo "No need to trigger the main workflow."
