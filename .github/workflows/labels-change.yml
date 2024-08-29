@@ -3,6 +3,7 @@ name: Label Change Action
 on:
   issues:
     types: [labeled, unlabeled]
+  workflow_dispatch: # Allows manual trigger
 
 jobs:
   label_change_job:
@@ -34,32 +35,31 @@ jobs:
       run: |
         if [ $time_diff -lt 900 ]; then
           echo "Job triggered too soon. Scheduling a delayed run."
-          echo "::set-output name=should_run::false"
+          echo "should_run=false" >> $GITHUB_ENV
         else
           echo "Running the action now."
-          echo "::set-output name=should_run::true"
-        fi
+          echo "should_run=true" >> $GITHUB_ENV
 
     - name: Update last run timestamp
-      if: steps.schedule-or-run.outputs.should_run == 'true'
+      if: env.should_run == 'true'
       run: |
         mkdir -p .github
         echo $(date +%s) > .github/label_change_last_run
 
     - name: Save updated timestamp to cache
-      if: steps.schedule-or-run.outputs.should_run == 'true'
+      if: env.should_run == 'true'
       uses: actions/cache@v3
       with:
         path: .github/label_change_last_run
         key: label-change-last-run
 
     - name: Run your actions
-      if: steps.schedule-or-run.outputs.should_run == 'true'
+      if: env.should_run == 'true'
       run: |
         echo "Labels have changed! Running the desired action."
 
     - name: Schedule delayed run
-      if: steps.schedule-or-run.outputs.should_run == 'false'
+      if: env.should_run == 'false'
       run: |
-        echo "Scheduling a delayed run..."
-        gh workflow run label-change.yml --ref ${{ github.ref }} --wait --timeout 15m
+        echo "Scheduling a delayed run in 15 minutes..."
+        gh workflow run label-change.yml --ref ${{ github.ref }}
