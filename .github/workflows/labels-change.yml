@@ -3,7 +3,7 @@ name: Label Change Action
 on:
   issues:
     types: [labeled, unlabeled]
-  workflow_dispatch: # Allows manual trigger
+  workflow_dispatch: # Allows manual or programmatic trigger
 
 jobs:
   label_change_job:
@@ -12,7 +12,7 @@ jobs:
     steps:
     - name: Set up cache for last run timestamp
       id: cache-last-run
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: .github/label_change_last_run
         key: label-change-last-run
@@ -48,7 +48,7 @@ jobs:
 
     - name: Save updated timestamp to cache
       if: env.should_run == 'true'
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: .github/label_change_last_run
         key: label-change-last-run
@@ -57,9 +57,3 @@ jobs:
       if: env.should_run == 'true'
       run: |
         echo "Labels have changed! Running the desired action."
-
-    - name: Schedule delayed run
-      if: env.should_run == 'false'
-      run: |
-        echo "Scheduling a delayed run in 15 minutes..."
-        gh workflow run label-change.yml --ref ${{ github.ref }}
