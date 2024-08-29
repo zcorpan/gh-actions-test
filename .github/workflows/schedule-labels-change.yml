@@ -16,18 +16,14 @@ jobs:
         curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           -H "Accept: application/vnd.github+json" \
           https://api.github.com/repos/${{ github.repository }}/actions/runs?branch=${{ github.ref_name }} \
-          | jq -r '.workflow_runs[] | select(.name != "Schedule Label Change Action") | .event, .name, .conclusion' > last_run_info.txt
+          | jq -r '.workflow_runs[] | select(.name != "Schedule Label Change Action") | .name' > last_run_info.txt
 
     - name: Check if last run was labels changed
       id: check-last-run
       run: |
-        last_event=$(head -n 1 last_run_info.txt)
         last_name=$(head -n 2 last_run_info.txt | tail -n 1)
-        last_conclusion=$(tail -n 1 last_run_info.txt)
-        echo "Last event: $last_event"
         echo "Last workflow name: $last_name"
-        echo "Last conclusion: $last_conclusion"
-        if [ "$last_event" == "issues" ] && [ "$last_name" != "Schedule Label Change Action" ] && [ "$last_conclusion" == "success" ]; then
+        if [ "$last_name" != "Schedule Label Change Action" ]; then
           echo "should_run=true" >> $GITHUB_ENV
         else
           echo "should_run=false" >> $GITHUB_ENV
