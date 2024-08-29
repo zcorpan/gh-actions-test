@@ -9,6 +9,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Set up cache for last run timestamp
+      id: cache-last-run
+      uses: actions/cache@v3
+      with:
+        path: .github/label_change_last_run
+        key: label-change-last-run
+
     - name: Check last run timestamp
       id: check-last-run
       run: |
@@ -38,6 +45,13 @@ jobs:
       run: |
         mkdir -p .github
         echo $(date +%s) > .github/label_change_last_run
+
+    - name: Save updated timestamp to cache
+      if: steps.schedule-or-run.outputs.should_run == 'true'
+      uses: actions/cache@v3
+      with:
+        path: .github/label_change_last_run
+        key: label-change-last-run
 
     - name: Run your actions
       if: steps.schedule-or-run.outputs.should_run == 'true'
