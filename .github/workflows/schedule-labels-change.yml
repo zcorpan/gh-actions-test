@@ -23,13 +23,12 @@ jobs:
       run: |
         last_name=$(head -n 2 last_run_info.txt | tail -n 1)
         echo "Last workflow name: $last_name"
-        if [ "$last_name" != "Schedule Label Change Action" ]; then
+        if [ "$last_name" != "Schedule Label Change Action" ] && [ "$last_name" != "Build and Deploy" ]; then
           echo "should_run=true" >> $GITHUB_ENV
         else
           echo "should_run=false" >> $GITHUB_ENV
         fi
 
-    - name: Run the desired action if should_run is true
+    - name: Run "Build and Deploy"
       if: env.should_run == 'true'
-      run: |
-        echo "Labels have changed! Running the desired action."
+      run: gh workflow run build-and-deploy.yml --ref ${{ github.ref }}
