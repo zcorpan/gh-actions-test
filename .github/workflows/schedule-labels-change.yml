@@ -16,9 +16,19 @@ jobs:
         curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           -H "Accept: application/vnd.github+json" \
           https://api.github.com/repos/${{ github.repository }}/actions/runs?branch=${{ github.ref_name }} \
-          | jq -r '.workflow_runs[] | {name: .name, conclusion: .conclusion}' > last_runs_info.txt
-          echo "Contents of last_runs_info.txt:"
-          cat last_runs_info.txt
+          | jq -c '.workflow_runs[] | {name: .name, conclusion: .conclusion}' > last_runs_info.txt
+
+    - name: Print the contents of last_runs_info.txt
+      run: |
+        echo "Contents of last_runs_info.txt:"
+        cat last_runs_info.txt
+
+    - name: Ensure valid JSON output
+      run: |
+        if [ ! -s last_runs_info.txt ]; then
+          echo "No workflow runs found or empty response. Exiting."
+          exit 1
+        fi
 
     - name: Iterate over the recent workflows
       id: check-last-run
