@@ -10,6 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Check out the repository
+      uses: actions/checkout@v4
+
     - name: Get the last few workflow runs
       id: last-runs
       run: |
