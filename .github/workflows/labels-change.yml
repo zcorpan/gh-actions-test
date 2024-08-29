@@ -36,6 +36,7 @@ jobs:
     - name: Update last run timestamp
       if: steps.schedule-or-run.outputs.should_run == 'true'
       run: |
+        mkdir -p .github
         echo $(date +%s) > .github/label_change_last_run
 
     - name: Run your actions
