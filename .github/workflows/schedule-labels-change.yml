@@ -36,6 +36,14 @@ jobs:
       run: |
         echo "false" > .github/should_run_flag
 
+    - name: Print should_run flag before check
+      run: |
+        if [ -f ".github/should_run_flag" ]; then
+          cat .github/should_run_flag
+        else
+          echo "should_run_flag file does not exist."
+        fi
+        
     - name: Save reset should_run flag to cache
       uses: actions/cache@v4
       with:
