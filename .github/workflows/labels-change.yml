@@ -10,51 +10,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Set up cache for last run timestamp
-      id: cache-last-run
+    - name: Set up cache for should_run flag
+      id: cache-should-run
       uses: actions/cache@v4
       with:
-        path: .github/label_change_last_run
-        key: label-change-last-run
+        path: .github/should_run_flag
+        key: should_run_flag
 
-    - name: Check last run timestamp
-      id: check-last-run
-      run: |
-        last_run_file=".github/label_change_last_run"
-        if [ -f "$last_run_file" ]; then
-          last_run=$(cat "$last_run_file")
-        else
-          last_run=0
-        fi
-        current_time=$(date +%s)
-        time_diff=$((current_time - last_run))
-        echo "time_diff=$time_diff" >> $GITHUB_ENV
-
-    - name: Decide to run or schedule later
-      id: schedule-or-run
-      run: |
-        if [ $time_diff -lt 900 ]; then
-          echo "Job triggered too soon. Scheduling a delayed run."
-          echo "should_run=false" >> $GITHUB_ENV
-        else
-          echo "Running the action now."
-          echo "should_run=true" >> $GITHUB_ENV
-        fi
-
-    - name: Update last run timestamp
-      if: env.should_run == 'true'
+    - name: Set should_run to true
       run: |
         mkdir -p .github
-        echo $(date +%s) > .github/label_change_last_run
+        echo "true" > .github/should_run_flag
 
-    - name: Save updated timestamp to cache
-      if: env.should_run == 'true'
+    - name: Save should_run flag to cache
       uses: actions/cache@v4
       with:
-        path: .github/label_change_last_run
-        key: label-change-last-run
-
-    - name: Run your actions
-      if: env.should_run == 'true'
-      run: |
-        echo "Labels have changed! Running the desired action."
+        path: .github/should_run_flag
+        key: should_run_flag
