@@ -37,7 +37,6 @@ jobs:
         echo "false" > .github/should_run_flag
 
     - name: Save reset should_run flag to cache
-      if: env.should_run == 'true'
       uses: actions/cache@v4
       with:
         path: .github/should_run_flag
