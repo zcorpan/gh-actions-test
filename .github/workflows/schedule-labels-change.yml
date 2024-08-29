@@ -5,36 +5,38 @@ on:
     - cron: '*/15 * * * *' # Runs every 15 minutes
 
 jobs:
-  check_and_trigger:
+  check_and_run:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Set up cache for last run timestamp
-      id: cache-last-run
+    - name: Set up cache for should_run flag
+      id: cache-should-run
       uses: actions/cache@v4
       with:
-        path: .github/label_change_last_run
-        key: label-change-last-run
+        path: .github/should_run_flag
+        key: should_run_flag
 
-    - name: Check if last run was recent
-      id: check-last-run
+    - name: Check should_run flag
+      id: check-should-run
       run: |
-        last_run_file=".github/label_change_last_run"
-        if [ -f "$last_run_file" ]; then
-          last_run=$(cat "$last_run_file")
+        if [ -f ".github/should_run_flag" ] && [ "$(cat .github/should_run_flag)" = "true" ]; then
+          echo "should_run=true" >> $GITHUB_ENV
         else
-          last_run=0
-        fi
-        current_time=$(date +%s)
-        time_diff=$((current_time - last_run))
-        echo "time_diff=$time_diff" >> $GITHUB_ENV
+          echo "should_run=false" >> $GITHUB_ENV
 
-    - name: Trigger main workflow if needed
-      if: env.time_diff -ge 900
+    - name: Run the desired action if should_run is true
+      if: env.should_run == 'true'
       run: |
-        echo "Triggering the main workflow..."
-        gh workflow run label-change.yml --ref ${{ github.ref }}
+        echo "Labels have changed! Running the desired action."
 
-    - name: Skip triggering
-      if: env.time_diff -lt 900
-      run: echo "No need to trigger the main workflow."
+    - name: Reset should_run flag
+      if: env.should_run == 'true'
+      run: |
+        echo "false" > .github/should_run_flag
+
+    - name: Save reset should_run flag to cache
+      if: env.should_run == 'true'
+      uses: actions/cache@v4
+      with:
+        path: .github/should_run_flag
+        key: should_run_flag
