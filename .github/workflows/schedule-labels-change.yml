@@ -1,8 +1,6 @@
 name: Schedule Label Change Action
 
 on:
-  #schedule:
-  #  - cron: '*/15 * * * *' # Runs every 15 minutes
   workflow_dispatch: # Allows manual trigger
 
 jobs:
@@ -10,56 +8,56 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check out the repository
-      uses: actions/checkout@v4
+      - name: Check out the repository
+        uses: actions/checkout@v4
 
-    - name: Get the last few workflow runs
-      id: last-runs
-      run: |
-        curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github+json" \
-          https://api.github.com/repos/${{ github.repository }}/actions/runs?branch=${{ github.ref_name }} \
-          | jq -c '.workflow_runs[] | {name: .name, conclusion: .conclusion}' > last_runs_info.txt
+      - name: Get the last few workflow runs
+        id: last-runs
+        run: |
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/actions/runs?branch=${{ github.ref_name }} \
+            | jq -c '.workflow_runs[] | {name: .name, conclusion: .conclusion}' > last_runs_info.txt
 
-    - name: Print the contents of last_runs_info.txt
-      run: |
-        echo "Contents of last_runs_info.txt:"
-        cat last_runs_info.txt
+      - name: Print the contents of last_runs_info.txt
+        run: |
+          echo "Contents of last_runs_info.txt:"
+          cat last_runs_info.txt
 
-    - name: Ensure valid JSON output
-      run: |
-        if [ ! -s last_runs_info.txt ]; then
-          echo "No workflow runs found or empty response. Exiting."
-          exit 1
-        fi
-
-    - name: Iterate over the recent workflows
-      id: check-last-run
-      run: |
-        should_run=false
-        while IFS= read -r line; do
-          name=$(echo "$line" | jq -r '.name')
-          conclusion=$(echo "$line" | jq -r '.conclusion')
-
-          echo "Checking workflow: $name with conclusion: $conclusion"
-
-          if [ "$name" == "Schedule Label Change Action" ] && [ "$conclusion" == "success" ]; then
-            should_run=false
-            break
-          elif [ "$name" == "Label Change Action" ]; then
-            should_run=true
-            break
+      - name: Ensure valid JSON output
+        run: |
+          if [ ! -s last_runs_info.txt ]; then
+            echo "No workflow runs found or empty response. Exiting."
+            exit 1
           fi
-        done < last_runs_info.txt
 
-        if [ "$should_run" == "true" ]; then
-          echo "should_run=true" >> $GITHUB_ENV
-        else
-          echo "should_run=false" >> $GITHUB_ENV
-        fi
+      - name: Iterate over the recent workflows
+        id: check-last-run
+        run: |
+          should_run=false
+          while IFS= read -r line; do
+            name=$(echo "$line" | jq -r '.name')
+            conclusion=$(echo "$line" | jq -r '.conclusion')
 
-    - name: Run "Build and Deploy"
-      if: env.should_run == 'true'
-      env:
-        GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-      run: gh workflow run build-and-deploy.yml --ref ${{ github.ref }}
+            echo "Checking workflow: $name with conclusion: $conclusion"
+
+            if [ "$name" == "Schedule Label Change Action" ] && [ "$conclusion" == "success" ]; then
+              should_run=false
+              break
+            elif [ "$name" == "Label Change Action" ]; then
+              should_run=true
+              break
+            fi
+          done < last_runs_info.txt
+
+          if [ "$should_run" == "true" ]; then
+            echo "should_run=true" >> $GITHUB_ENV
+          else
+            echo "should_run=false" >> $GITHUB_ENV
+          fi
+
+      - name: Run "Build and Deploy"
+        if: env.should_run == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run build-and-deploy.yml --ref ${{ github.ref }}
