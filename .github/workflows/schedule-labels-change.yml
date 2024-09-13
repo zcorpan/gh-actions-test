@@ -11,6 +11,13 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v4
 
+      - name: Set up SSH for Git (deploy key)
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
       - name: Get the last few workflow runs
         id: last-runs
         run: |
@@ -56,8 +63,13 @@ jobs:
             echo "should_run=false" >> $GITHUB_ENV
           fi
 
-      - name: Run "Build and Deploy"
+      - name: Push changes to `trigger-build` branch
         if: env.should_run == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run build-and-deploy.yml --ref ${{ github.ref }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b trigger-build
+          git add .
+          git commit --allow-empty -m "Trigger build and deploy workflow"
+          git remote set-url origin git@github.com:${{ github.repository }}.git
+          git push origin trigger-build --force

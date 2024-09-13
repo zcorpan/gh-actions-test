@@ -1,7 +1,10 @@
 name: Build and Deploy
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - trigger-build
+  workflow_dispatch: # Allows manual trigger
 
 jobs:
   build_and_deploy:
@@ -11,7 +14,7 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v4
 
-      - name: Set up SSH key
+      - name: Set up SSH for Git (deploy key)
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
@@ -32,7 +35,7 @@ jobs:
         run: |
           python3 build.py
 
-      - name: Commit and Push Changes
+      - name: Commit and Push Changes to `gh-pages`
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
