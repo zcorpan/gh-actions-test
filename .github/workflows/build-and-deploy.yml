@@ -10,8 +10,13 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -29,10 +34,10 @@ jobs:
 
       - name: Commit and Push Changes
         run: |
-          git remote set-url origin https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
-          git config --global user.name "zcorpan"
-          git config --global user.email "zcorpan@gmail.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b gh-pages
           git add .
           git commit -m "Update GitHub Pages with latest data"
+          git remote set-url origin git@github.com:${{ github.repository }}.git
           git push origin gh-pages --force
