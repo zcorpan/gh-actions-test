@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - trigger-build
+      - main
   workflow_dispatch: # Allows manual trigger
 
 jobs:
